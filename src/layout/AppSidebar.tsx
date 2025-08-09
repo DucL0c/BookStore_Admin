@@ -28,18 +28,39 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    name: "Trang chủ",
+    subItems: [{ name: "Book Store", path: "/", pro: false }],
+  },  
+  {
+    name: "Danh mục sản phẩm",
+    icon: <BoxCubeIcon />,
+    path: "/product-categories",
+  },
+  {
+    name: "Quản lý sản phẩm",
+    icon: <PageIcon />,
+    subItems: [
+      { name: "Danh sách sản phẩm", path: "/products", pro: false },
+      { name: "Tác giả", path: "/authors", pro: false },
+      { name: "Nhà cung cấp", path: "/sellers", pro: false },
+      { name: "Thông số kĩ thuật", path: "/book-specifications", pro: false },
+      { name: "Ảnh bìa", path: "/book-images", pro: false }
+    ],
+  },
+  {
+    name: "Đơn hàng",
+    icon: <UserCircleIcon />,
+    path: "/orders",
+  },
+  {
+    icon: <ListIcon />,
+    name: "Thông tin cá nhân",
+    path: "/profile",
   },
   {
     icon: <CalenderIcon />,
-    name: "Calendar",
+    name: "Lịch",
     path: "/calendar",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
   },
   {
     name: "Forms",
