@@ -18,6 +18,13 @@ import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
+import Category from "./pages/Category";
+import Order from "./pages/Order";
+import Book from "./pages/Products/Book";
+import Author from "./pages/Products/Author";
+import Seller from "./pages/Products/Seller";
+import Specification from "./pages/Products/Specification";
+import Image from "./pages/Products/Image";
 
 export default function App() {
   return (
@@ -29,8 +36,19 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
 
-            {/* Others Page */}
+            {/* Book store */}
+            
+            <Route path="/category" element={<Category />} />
+            <Route path="/order" element={<Order />} />
             <Route path="/profile" element={<UserProfiles />} />
+
+            <Route path="/product" element={<Book />} />
+            <Route path="/author" element={<Author />} />
+            <Route path="/seller" element={<Seller />} />
+            <Route path="/specification" element={<Specification />} />
+            <Route path="/image" element={<Image />} />
+
+            {/* Others Page */}
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />
 
