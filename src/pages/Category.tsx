@@ -508,7 +508,7 @@ export default function Category() {
                   </div>
                   
                   <div className="flex items-center gap-2 text-sm">
-                    <span>Đến trang:</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Đến trang:</span>
                     <Input
                       type="number"
                       min="1"
