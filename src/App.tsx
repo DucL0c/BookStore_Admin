@@ -25,10 +25,20 @@ import Author from "./pages/Products/Author";
 import Seller from "./pages/Products/Seller";
 import Specification from "./pages/Products/Specification";
 import Image from "./pages/Products/Image";
+import { Toaster } from "react-hot-toast";
 
 export default function App() {
   return (
     <>
+      <Toaster
+        position="top-right"
+        gutter={8}
+        toastOptions={{
+          style: {
+            marginTop: '64px',
+          },
+        }}
+      />
       <Router>
         <ScrollToTop />
         <Routes>

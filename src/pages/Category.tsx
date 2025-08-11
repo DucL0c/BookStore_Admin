@@ -10,51 +10,158 @@ import {
 } from "../components/ui/table"
 
 import Badge from "../components/ui/badge/Badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "../components/ui/modal";
 import Label from "../components/form/Label";
 import Input from "../components/form/input/InputField";
 import { useModal } from "../hooks/useModal";
+import DataService from "../services/axiosClient";
+import ToastService from "../services/notificationService";
 
 interface Category {
-  id: number;
+  categoryId: number;
   name: string;
-  is_leaf: boolean;
+  isLeaf: boolean;
 }
 
-const tableData: Category[] = [
-  {
-    id: 1,
-    name: "Điện thoại",
-    is_leaf: false,
-  },
-  {
-    id: 2,
-    name: "Máy tính bảng",
-    is_leaf: true,
-  }
-]
 export default function Category() {
   const [selectAll, setSelectAll] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const { isOpen, openModal, closeModal } = useModal();
-  const [is_leaf, setIsLeaf] = useState<boolean>(false);
-  
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
+  const {isOpen, openModal, closeModal } = useModal();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await DataService.get<Category[]>("/Category/getall");
+      if (res && Array.isArray(res)) {
+        setCategories(res);
+      } else {
+        ToastService.error("Dữ liệu danh mục không hợp lệ");
+      }
+    } catch (err) {
+      ToastService.error("Không thể tải danh sách danh mục");
+    }
   };
 
-  const handleAddCategory = (message: string) => {
-    alert(message);
+  const resetForm = () => {
+    setEditingCategory(null);
+    setSelectedIds([]);
+    setSelectAll(false);
   };
+
+  const prepareAddCategory = () => {
+    setEditingCategory({
+      categoryId: 0,
+      name: "",
+      isLeaf: false
+    });
+    openModal();
+  };
+
+  const prepareEditCategory = (category: Category) => {
+    setEditingCategory({ ...category });
+    openModal();
+  };
+
+  const handleSubmitCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory) return;
+
+    setIsSubmitting(true);
+    try {
+      if (editingCategory.categoryId > 0) {
+        // Update existing category
+        await handleUpdateCategory();
+      } else {
+        // Create new category
+        await handleAddCategory();
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!editingCategory) return;
+    
+    try {
+      const data = {
+        Name: editingCategory.name,
+        IsLeaf: editingCategory.isLeaf
+      };
+      
+      const res = await DataService.post("/Category/create", data);
+      if (res) {
+        ToastService.success("Thêm danh mục thành công");
+        fetchCategories();
+        closeModal();
+        resetForm();
+      }
+    } catch (err) {
+      ToastService.error("Thêm danh mục thất bại");
+    }
+  };
+
+  const handleUpdateCategory = async () => {
+    if (!editingCategory || editingCategory.categoryId <= 0) return;
+    
+    try {
+      const data = {
+        CategoryId: editingCategory.categoryId,
+        Name: editingCategory.name,
+        IsLeaf: editingCategory.isLeaf
+      };
+      
+      const res = await DataService.put("/Category/update", data);
+      if (res) {
+        ToastService.success("Cập nhật danh mục thành công");
+        fetchCategories();
+        closeModal();
+        resetForm();
+      }
+    } catch (err) {
+      ToastService.error("Cập nhật danh mục thất bại");
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (selectedIds.length === 0) {
+      ToastService.error("Vui lòng chọn ít nhất một danh mục để xóa");
+      return;
+    }
+
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} danh mục đã chọn?`)) {
+      return;
+    }
+
+    try {
+      let data = JSON.stringify(selectedIds);
+      const res = await DataService.delete("/Category/deletemulti?checkedList=" + data);
+      if (res) {
+        ToastService.success(`Đã xóa thành công ${selectedIds.length} danh mục`);
+        fetchCategories();
+        resetForm();
+      }
+    } catch (err) {
+      ToastService.error("Xóa danh mục thất bại");
+    }
+  };
+
 
   const handleSelectAll = () => {
     if (selectAll) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(tableData.map((category) => category.id));
+      setSelectedIds(categories.map((category) => category.categoryId));
     }
     setSelectAll(!selectAll);
   };
@@ -81,10 +188,10 @@ export default function Category() {
           {/* Card Header */}
           <div className="px-6 py-5">
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="primary" onClick={() => handleAddCategory("Thêm mới thành công!")}>
+              <Button size="sm" variant="primary" onClick={prepareAddCategory}>
                 Thêm mới
               </Button>
-              <Button size="sm" variant="danger" onClick={() => handleAddCategory("Xoá thành công!")}>
+              <Button size="sm" variant="danger" onClick={handleDeleteCategory} disabled={selectedIds.length === 0}>
                 Xoá
               </Button>
             </div>
@@ -130,7 +237,7 @@ export default function Category() {
                         </TableCell>
                         <TableCell
                           isHeader
-                          className="px-5 py-3  text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                          className="px-5 py-3  text-gray-500 text-start text-theme-sm dark:text-gray-400 w-[250px]"
                         >
                           Thao tác
                         </TableCell>
@@ -139,17 +246,18 @@ export default function Category() {
 
                     {/* Table Body */}
                     <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                      {tableData.map((category, index) => (
-                        <TableRow key={category.id}>
+                    
+                      {categories.length > 0 ? ( categories.map((category, index) => (
+                        <TableRow key={category.categoryId ?? index}>
                           <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                             <input
                               type="checkbox"
-                              checked={selectedIds.includes(category.id)}
-                              onChange={() => handleCheckboxChange(category.id)}
+                              checked={selectedIds.includes(category.categoryId)}
+                              onChange={() => handleCheckboxChange(category.categoryId)}
                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                           </TableCell>
-                          <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                          <TableCell  className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                             {index + 1}
                           </TableCell>
                           <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
@@ -159,19 +267,19 @@ export default function Category() {
                             <Badge
                               size="sm"
                               color={
-                                category.is_leaf === false
+                                category.isLeaf === false
                                   ? "success"
-                                  : category.is_leaf === true
+                                  : category.isLeaf === true
                                     ? "warning"
                                     : "error"
                               }
                             >
-                              {category.is_leaf ? "Có" : "Không"}
+                              {category.isLeaf ? "Có" : "Không"}
                             </Badge>
                           </TableCell>
                           <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                             <button
-                              onClick={openModal}
+                              onClick={() => prepareEditCategory(category)}
                               className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-xs font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
                             >
                               <svg
@@ -192,8 +300,14 @@ export default function Category() {
                               Chỉnh sửa
                             </button>
                           </TableCell>
-                        </TableRow>
-                      ))}
+                        </TableRow> 
+                      )) ) : (
+                      <TableRow>
+                          <TableCell className="text-center py-4">
+                            Không có danh mục nào
+                          </TableCell>
+                        </TableRow>)
+                      }
                     </TableBody>
                   </Table>
                 </div>
@@ -207,43 +321,63 @@ export default function Category() {
         <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Danh mục sản phẩm
+              {editingCategory?.categoryId ? "Chỉnh sửa danh mục" : "Thêm mới danh mục"}
             </h4>
           </div>
-          <form className="flex flex-col">
+          <form
+            className="flex flex-col"
+            onSubmit={handleSubmitCategory}
+          >
             <div className="custom-scrollbar h-[90px] overflow-y-auto px-2 pb-3">
-              <div>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                <div>
+                  <Label>Tên danh mục</Label>
+                  <Input
+                    type="text"
+                    value={editingCategory?.name || ""}
+                    onChange={(e) =>
+                      setEditingCategory((prev) =>
+                        prev ? { ...prev, name: e.target.value } : null
+                      )
+                    }
+                  />
+                </div>
 
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                  <div>
-                    <Label>Tên danh mục</Label>
-                    <Input
-                      type="text"
-                      value=""
-                    />
-                  </div>
-
-                  <div >
-                    <Label>Is_leaf</Label>
-                    <select
-                      className=" h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 border-gray-300 "
-                      value={is_leaf ? "true" : "false"}
-                      onChange={e => setIsLeaf(e.target.value === "true")}
-                    >
-                      <option value="true">True</option>
-                      <option value="false">False</option>
-                    </select>
-                  </div>
+                <div>
+                  <Label>Is_leaf</Label>
+                  <select
+                    className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 border-gray-300"
+                    value={editingCategory?.isLeaf ? "true" : "false"}
+                    onChange={(e) =>
+                      setEditingCategory((prev) =>
+                        prev ? { ...prev, isLeaf: e.target.value === "true" } : null
+                      )
+                    }
+                  >
+                    <option value="true">Có</option>
+                    <option value="false">Không</option>
+                  </select>
                 </div>
               </div>
             </div>
+
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
-                Đóng
-              </Button>
-              <Button size="sm" onClick={handleSave}>
-                Lưu thay đổi
-              </Button>
+    <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={closeModal}
+                    type="button"
+                  >
+                    Đóng
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    type="submit" 
+                    variant="primary"
+                    disabled={isSubmitting}
+                  >
+                    {editingCategory?.categoryId ? "Lưu thay đổi" : "Thêm mới"}
+                  </Button>
             </div>
           </form>
         </div>
