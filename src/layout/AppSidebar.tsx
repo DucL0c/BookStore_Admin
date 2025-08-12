@@ -14,6 +14,8 @@ import {
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
+  GroupIcon,
+  ShootingStarIcon
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -37,25 +39,33 @@ const navItems: NavItem[] = [
     path: "/category",
   },
   {
-    name: "Quản lý sản phẩm",
+    name: "Quản lý sách",
     icon: <PageIcon />,
     subItems: [
-      { name: "Sản phẩm", path: "/product", pro: false },
-      { name: "Tác giả", path: "/author", pro: false },
-      { name: "Danh sách tác giả & sản phẩm", path: "/author-product", pro: false },
-      { name: "Nhà cung cấp", path: "/seller", pro: false },
-      { name: "Danh sách nhà cung cấp & sản phẩm", path: "/seller-product", pro: false },
-      { name: "Thông số kĩ thuật", path: "/specification", pro: false },
-      { name: "Ảnh bìa", path: "/image", pro: false }
+      { name: "Thêm sách", path: "/product", pro: false },
+      { name: "Thêm tác giả", path: "/author-product", pro: false },
+      { name: "Thêm nhà cung cấp", path: "/seller-product", pro: false },
+      { name: "Thêm thông số kĩ thuật", path: "/specification", pro: false },
+      { name: "Thêm ảnh bìa", path: "/image", pro: false }
     ],
   },
   {
+    name: "Quản lý tác giả",
+    icon: <GroupIcon />,
+    path: "/author",
+  },
+  {
+    name: "Quản lý nhà cung cấp",
+    icon: <ShootingStarIcon />,
+    path: "/seller",
+  },
+  {
     name: "Đơn hàng",
-    icon: <UserCircleIcon />,
+    icon: < ListIcon/>,
     path: "/order",
   },
   {
-    icon: <ListIcon />,
+    icon: <UserCircleIcon />,
     name: "Thông tin cá nhân",
     path: "/profile",
   },
