@@ -595,7 +595,7 @@ export default function Specification() {
             </h4>
           </div>
           <form className="flex flex-col" onSubmit={handleSubmitSpecification}>
-            <div className="custom-scrollbar h-[200px] overflow-y-auto  px-2 pb-3">
+            <div className="custom-scrollbar h-[230px] overflow-visible px-2 pb-3">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
                   <Label>Chọn sách</Label>
