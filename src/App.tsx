@@ -26,6 +26,8 @@ import Seller from "./pages/Products/Seller";
 import Specification from "./pages/Products/Specification";
 import Image from "./pages/Products/Image";
 import { Toaster } from "react-hot-toast";
+import Book_Author from "./pages/Products/Book_Author";
+import Book_Seller from "./pages/Products/Book_Seller";
 
 export default function App() {
   return (
@@ -54,6 +56,8 @@ export default function App() {
 
             <Route path="/product" element={<Book />} />
             <Route path="/author" element={<Author />} />
+            <Route path="/author-product" element={<Book_Author />} />
+            <Route path="/seller-product" element={<Book_Seller />} />
             <Route path="/seller" element={<Seller />} />
             <Route path="/specification" element={<Specification />} />
             <Route path="/image" element={<Image />} />

@@ -17,7 +17,6 @@ import { useModal } from "../../hooks/useModal";
 import DataService from "../../services/axiosClient";
 import ToastService from "../../services/notificationService";
 import Select from 'react-select';
-import Badge from "../../components/ui/badge/Badge";
 
 interface Book {
   bookId: number
@@ -25,28 +24,29 @@ interface Book {
   description: string;
 }
 
-interface BookImage {
-  imageId: number;
-  bookId: number;
-  baseUrl: string;
-  smallUrl: string;
-  mediumUrl: string;
-  largeUrl: string;
-  thumbnailUrl: string;
-  isGallery: boolean;
-  book: Book;
+interface Author {
+  authorId: number;
+  name: string;
 }
 
-interface BookImageResponse {
+interface BookAuthor {
+  id: number;
+  bookId: number;
+  authorId: number;
+  book: Book;
+  author: Author
+}
+
+interface BookAuthorResponse {
   page: number;
   count: number;
   totalPages: number;
   totalCount: number;
   maxPage: number;
-  items: BookImage[];
+  items: BookAuthor[];
 }
 
-export default function Image() {
+export default function Book_Author() {
   const [page, setPage] = useState(0);
   const [pageSize] = useState(8);
   const [totalPages, setTotalPages] = useState(0);
@@ -55,18 +55,20 @@ export default function Image() {
   const [selectAll, setSelectAll] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const {isOpen, openModal, closeModal } = useModal();
-  const [bookImages, setBookImages] = useState<BookImage[]>([]);
-  const [editingBookImage, setEditingBookImage] = useState<BookImage | null>(null);
+  const [bookAuthors, setBookAuthors] = useState<BookAuthor[]>([]);
+  const [editingBookAuthor, setEditingBookAuthor] = useState<BookAuthor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   const [books, setBooks] = useState<Book[]>([]);
+  const [authors, setAuthors] = useState<Author[]>([]);
   const [, setSelectedBook] = useState<number | "">("");
+  const [, setSelectedAuthor] = useState<number | "">("");
 
   useEffect(() => {
-    fetchBookImages();
+    fetchBookAuthors();
   }, [page]);
 
   useEffect(() => {
@@ -79,26 +81,27 @@ export default function Image() {
 
   useEffect(() => {
     if (debouncedSearchTerm !== '') {
-      fetchBookImages();
+      fetchBookAuthors();
     } else {
-      fetchBookImages();
+      fetchBookAuthors();
     }
   }, [debouncedSearchTerm, page]);
 
   useEffect(() => {
     if(isOpen) {
       fetchBooks();
+      fetchAuthors();
     }
   }, [isOpen]);
 
 
-  const fetchBookImages = async () => {
+  const fetchBookAuthors = async () => {
     try {
-      const res = await DataService.get<BookImageResponse, any>(
-        `/BookImage/getallbypaging?page=${page}&pageSize=${pageSize}&keyword=${debouncedSearchTerm}`
+      const res = await DataService.get<BookAuthorResponse, any>(
+        `/BookAuthor/getallbypaging?page=${page}&pageSize=${pageSize}&keyword=${debouncedSearchTerm}`
       );
       if (res && Array.isArray(res.items)) {
-        setBookImages(res.items);
+        setBookAuthors(res.items);
         setTotalPages(res.totalPages);
       } else {
         ToastService.error("Dữ liệu không hợp lệ");
@@ -125,46 +128,58 @@ export default function Image() {
     }
   };
 
+  const fetchAuthors = async () => {
+    try {
+      const res = await DataService.get<Author[], any>("/Author/getall");
+      if (res && Array.isArray(res)) {
+        setAuthors(res.map(a => ({
+          authorId: a.authorId ?? a.id ?? 0,
+          name: a.name ?? ""
+        })));
+      } else {
+        ToastService.error("Dữ liệu không hợp lệ");
+      }
+    } catch (err) {
+      ToastService.error("Không thể tải danh sách");
+    }
+  };
+
   // Reset Form
   const resetForm = () => {
-    setEditingBookImage(null);
+    setEditingBookAuthor(null);
     setSelectedIds([]);
     setSelectAll(false);
   };
 
-  const prepareAddBookImage = () => {
-    setEditingBookImage({
-        imageId: 0,
-        bookId: 0,
-        baseUrl: '',
-        smallUrl: '',
-        mediumUrl: '',
-        largeUrl: '',
-        thumbnailUrl: '',
-        isGallery: false,
-        book: { bookId: 0, name: '', description: '' }
+  const prepareAddBookAuthor = () => {
+    setEditingBookAuthor({
+      id: 0,
+      bookId: 0,
+      authorId: 0,
+      book: { bookId: 0, name: '', description: '' },
+      author: { authorId: 0, name: '' }
     });
     openModal();
   };
 
-  const prepareEditBookImage = (bookImage: BookImage) => {
-    setEditingBookImage({ ...bookImage });
+  const prepareEditBookAuthor = (bookAuthor: BookAuthor) => {
+    setEditingBookAuthor({ ...bookAuthor });
     openModal();
   };
 
-  // Submit book image
-  const handleSubmitBookImage = async (e: React.FormEvent) => {
+  // Submit book author
+  const handleSubmitBookAuthor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingBookImage) return;
+    if (!editingBookAuthor) return;
 
     setIsSubmitting(true);
     try {
-      if (editingBookImage.imageId > 0) {
-        // Update existing book image
-        await handleUpdateBookImage();
+      if (editingBookAuthor.id > 0) {
+        // Update existing author
+        await handleUpdateBookAuthor();
       } else {
-        // Create new book image
-        await handleAddBookImage();
+        // Create new author
+        await handleAddBookAuthor();
       }
     } catch (error) {
       console.error("Submit error:", error);
@@ -174,25 +189,20 @@ export default function Image() {
   };
 
 
-  // Add book image
-  const handleAddBookImage = async () => {
-    if (!editingBookImage) return;
+  // Add author
+  const handleAddBookAuthor = async () => {
+    if (!editingBookAuthor) return;
 
     try {
       const data = {
-        BookId: editingBookImage.bookId,
-        BaseUrl: editingBookImage.baseUrl,
-        SmallUrl: editingBookImage.smallUrl,
-        MediumUrl: editingBookImage.mediumUrl,
-        LargeUrl: editingBookImage.largeUrl,
-        ThumbnailUrl: editingBookImage.thumbnailUrl,
-        IsGallery: editingBookImage.isGallery
+        bookid: editingBookAuthor.bookId,
+        authorid: editingBookAuthor.authorId
       };
 
-      const res = await DataService.post("/BookImage/create", data);
+      const res = await DataService.post("/BookAuthor/create", data);
       if (res) {
         ToastService.success("Thêm thành công");
-        fetchBookImages();
+        fetchBookAuthors();
         closeModal();
         resetForm();
       }
@@ -202,26 +212,21 @@ export default function Image() {
   };
 
 
-  // Update book image
-  const handleUpdateBookImage = async () => {
-    if (!editingBookImage || editingBookImage.imageId <= 0) return;
+  // Update book author
+  const handleUpdateBookAuthor = async () => {
+    if (!editingBookAuthor || editingBookAuthor.authorId <= 0) return;
 
     try {
       const data = {
-        ImageId: editingBookImage.imageId,
-        BookId: editingBookImage.bookId,
-        BaseUrl: editingBookImage.baseUrl,
-        SmallUrl: editingBookImage.smallUrl,
-        MediumUrl: editingBookImage.mediumUrl,
-        LargeUrl: editingBookImage.largeUrl,
-        ThumbnailUrl: editingBookImage.thumbnailUrl,
-        IsGallery: editingBookImage.isGallery
+        Id: editingBookAuthor.id,
+        BookId: editingBookAuthor.bookId,
+        AuthorId: editingBookAuthor.authorId,
       };
 
-      const res = await DataService.put("/BookImage/Update", data);
+      const res = await DataService.put("/BookAuthor/Update", data);
       if (res) {
         ToastService.success("Cập nhật thành công");
-        fetchBookImages();
+        fetchBookAuthors();
         closeModal();
         resetForm();
       }
@@ -231,8 +236,8 @@ export default function Image() {
   };
 
 
-  // Delete book image
-  const handleDeleteBookImage = async () => {
+  // Delete book author
+  const handleDeleteBookAuthor = async () => {
     if (selectedIds.length === 0) {
       ToastService.error("Vui lòng chọn ít nhất một dòng để xóa");
       return;
@@ -249,7 +254,7 @@ export default function Image() {
     try {
       let data = JSON.stringify(selectedIds);
       const res = await DataService.delete<any>(
-        "/BookImage/deletemulti?checkedList=" + data
+        "/BookAuthor/deletemulti?checkedList=" + data
       );
       if (res) {
         if (Array.isArray(res) && res.length > 0) {
@@ -262,7 +267,7 @@ export default function Image() {
             );
           }
         }
-        fetchBookImages();
+        fetchBookAuthors();
         resetForm();
       }
     } catch (err) {
@@ -274,7 +279,7 @@ export default function Image() {
     if (selectAll) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(bookImages.map((bookImage) => bookImage.imageId));
+      setSelectedIds(bookAuthors.map((bookAuthor) => bookAuthor.authorId));
     }
     setSelectAll(!selectAll);
   };
@@ -299,13 +304,13 @@ export default function Image() {
           <div className="px-6 py-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="primary" onClick={prepareAddBookImage}>
+                <Button size="sm" variant="primary" onClick={prepareAddBookAuthor}>
                   Thêm mới
                 </Button>
                 <Button
                   size="sm"
                   variant="danger"
-                  onClick={handleDeleteBookImage}
+                  onClick={handleDeleteBookAuthor}
                   disabled={selectedIds.length === 0}
                 >
                   Xoá
@@ -314,7 +319,7 @@ export default function Image() {
 
               <form onSubmit={(e) => {
                   e.preventDefault();
-                  fetchBookImages();
+                  fetchBookAuthors();
                 }} className="w-full sm:w-auto">
                   <div className="relative">
                     <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
@@ -347,7 +352,7 @@ export default function Image() {
                         type="button"
                         onClick={() => {
                           setSearchTerm('');
-                          fetchBookImages();
+                          fetchBookAuthors();
                         }}
                         className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
@@ -406,37 +411,7 @@ export default function Image() {
                           isHeader
                           className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
                         >
-                          Ảnh mặc định
-                        </TableCell>
-                        <TableCell
-                          isHeader
-                          className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
-                        >
-                          Ảnh nhỏ
-                        </TableCell>
-                        <TableCell
-                          isHeader
-                          className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
-                        >
-                          Ảnh trung bình
-                        </TableCell>
-                        <TableCell
-                          isHeader
-                          className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
-                        >
-                          Ảnh lớn
-                        </TableCell>
-                        <TableCell
-                          isHeader
-                          className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
-                        >
-                          Ảnh thu nhỏ
-                        </TableCell>
-                        <TableCell
-                          isHeader
-                          className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
-                        >
-                          Is Gallery
+                          Tên tác giả
                         </TableCell>
                         <TableCell
                           isHeader
@@ -449,17 +424,17 @@ export default function Image() {
 
                     {/* Table Body */}
                     <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                      {bookImages.length > 0 ? (
-                        bookImages.map((bookImage, index) => (
-                          <TableRow key={bookImage.imageId ?? index}>
+                      {bookAuthors.length > 0 ? (
+                        bookAuthors.map((bookAuthor, index) => (
+                          <TableRow key={bookAuthor.id ?? index}>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                               <input
                                 type="checkbox"
                                 checked={selectedIds.includes(
-                                  bookImage.imageId
+                                  bookAuthor.id
                                 )}
                                 onChange={() =>
-                                  handleCheckboxChange(bookImage.imageId)
+                                  handleCheckboxChange(bookAuthor.id)
                                 }
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               />
@@ -468,75 +443,14 @@ export default function Image() {
                               {page * pageSize + index + 1}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              {bookImage.book.name}
+                              {bookAuthor.book.name}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.baseUrl || "/images/default-avatar.png"}
-                                  alt="baseUrl"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.smallUrl || "/images/default-avatar.png"}
-                                  alt="smallUrl"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.mediumUrl || "/images/default-avatar.png"}
-                                  alt="mediumUrl"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.largeUrl || "/images/default-avatar.png"}
-                                  alt="largeUrl"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.thumbnailUrl || "/images/default-avatar.png"}
-                                  alt="thumbnailUrl"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <Badge
-                                size="sm"
-                                color={
-                                  bookImage.isGallery === true
-                                    ? "success"
-                                    : bookImage.isGallery === false
-                                    ? "warning"
-                                    : "error"
-                                }
-                              >
-                                {bookImage.isGallery ? "Có" : "Không"}
-                              </Badge>
+                              {bookAuthor.author.name}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                               <button
-                                onClick={() => prepareEditBookImage(bookImage)}
+                                onClick={() => prepareEditBookAuthor(bookAuthor)}
                                 className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-xs font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
                               >
                                 <svg
@@ -573,7 +487,7 @@ export default function Image() {
               {totalPages >= 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Hiển thị trang {page + 1} trên {totalPages} - Tổng {bookImages.length} mục
+                    Hiển thị trang {page + 1} trên {totalPages} - Tổng {bookAuthors.length} mục
                   </div>
                   
                   <div className="flex gap-1">
@@ -672,16 +586,16 @@ export default function Image() {
       </div>
 
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
-        <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto  rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
+        <div className="no-scrollbar relative w-full max-w-[700px] overflow-visible rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              {editingBookImage?.imageId
+              {editingBookAuthor?.id
                 ? "Chỉnh sửa"
                 : "Thêm mới"}
             </h4>
           </div>
-          <form className="flex flex-col" onSubmit={handleSubmitBookImage}>
-            <div className="custom-scrollbar h-[340px] overflow-y-auto  px-2 pb-3">
+          <form className="flex flex-col" onSubmit={handleSubmitBookAuthor}>
+            <div className="custom-scrollbar h-[130px] overflow-visible px-2 pb-3">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
                   <Label>Chọn sách</Label>
@@ -692,12 +606,12 @@ export default function Image() {
                     }))}
                     value={books
                       .map(book => ({ value: book.bookId, label: book.name }))
-                      .find(option => option.value === editingBookImage?.bookId) || null}
+                      .find(option => option.value === editingBookAuthor?.bookId) || null}
                     onChange={option => {
                       setSelectedBook(option ? option.value : "");
-                      if (editingBookImage) {
-                        setEditingBookImage({
-                          ...editingBookImage,
+                      if (editingBookAuthor) {
+                        setEditingBookAuthor({
+                          ...editingBookAuthor,
                           bookId: option ? option.value : 0
                         });
                       }
@@ -708,80 +622,32 @@ export default function Image() {
                 </div>
 
                 <div>
-                  <Label>Ảnh mặc định</Label>
-                  <Input
-                    type="text"
-                    value={editingBookImage?.baseUrl || ""}
-                    onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, baseUrl: e.target.value } : null
-                      )
+                  <Label>Chọn tác giả</Label>
+                  <Select
+                    options={authors.map(author => ({
+                      value: author.authorId,
+                      label: author.name
+                    }))}
+                    value={
+                      authors
+                        .map(author => ({
+                          value: author.authorId,
+                          label: author.name
+                        }))
+                        .find(option => option.value === editingBookAuthor?.authorId) || null
                     }
+                    onChange={option => {
+                      setSelectedAuthor(option ? option.value : "");
+                      if (editingBookAuthor) {
+                        setEditingBookAuthor({
+                          ...editingBookAuthor,
+                          authorId: option ? option.value : 0
+                        });
+                      }
+                    }}
+                    placeholder="Tìm kiếm tác giả..."
+                    isSearchable
                   />
-                </div>
-
-                <div>
-                  <Label>Ảnh nhỏ</Label>
-                  <Input
-                    type="text"
-                    value={editingBookImage?.smallUrl || ""}
-                    onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, smallUrl: e.target.value } : null
-                      )
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>Ảnh trung bình</Label>
-                  <Input
-                    type="text"
-                    value={editingBookImage?.mediumUrl || ""}
-                    onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, mediumUrl: e.target.value } : null
-                      )
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>Ảnh lớn</Label>
-                  <Input
-                    type="text"
-                    value={editingBookImage?.largeUrl || ""}
-                    onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, largeUrl: e.target.value } : null
-                      )
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Ảnh thu nhỏ</Label>
-                  <Input
-                    type="text"
-                    value={editingBookImage?.thumbnailUrl || ""}
-                    onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, thumbnailUrl: e.target.value } : null
-                      )
-                    }
-                  />
-                </div>
-                <div >
-                  <input
-                    type="checkbox"
-                    checked={editingBookImage?.isGallery || false}
-                    onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, isGallery: e.target.checked } : null
-                      )
-                    }
-                    className="w-4 h-4 accent-blue-500"
-                  />
-                  <Label>Is Gallery</Label>
                 </div>
               </div>
             </div>
@@ -801,7 +667,7 @@ export default function Image() {
                 variant="primary"
                 disabled={isSubmitting}
               >
-                {editingBookImage?.imageId ? "Lưu thay đổi" : "Thêm mới"}
+                {editingBookAuthor?.id ? "Lưu thay đổi" : "Thêm mới"}
               </Button>
             </div>
           </form>

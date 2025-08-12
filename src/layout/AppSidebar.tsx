@@ -40,9 +40,11 @@ const navItems: NavItem[] = [
     name: "Quản lý sản phẩm",
     icon: <PageIcon />,
     subItems: [
-      { name: "Danh sách sản phẩm", path: "/product", pro: false },
+      { name: "Sản phẩm", path: "/product", pro: false },
       { name: "Tác giả", path: "/author", pro: false },
+      { name: "Danh sách tác giả & sản phẩm", path: "/author-product", pro: false },
       { name: "Nhà cung cấp", path: "/seller", pro: false },
+      { name: "Danh sách nhà cung cấp & sản phẩm", path: "/seller-product", pro: false },
       { name: "Thông số kĩ thuật", path: "/specification", pro: false },
       { name: "Ảnh bìa", path: "/image", pro: false }
     ],

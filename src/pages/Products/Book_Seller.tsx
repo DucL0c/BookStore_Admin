@@ -25,28 +25,34 @@ interface Book {
   description: string;
 }
 
-interface BookImage {
-  imageId: number;
-  bookId: number;
-  baseUrl: string;
-  smallUrl: string;
-  mediumUrl: string;
-  largeUrl: string;
-  thumbnailUrl: string;
-  isGallery: boolean;
-  book: Book;
+interface Seller {
+  sellerId: number;
+  name: string;
 }
 
-interface BookImageResponse {
+interface BookSeller {
+  id: number;
+  bookId: number;
+  sellerId: number;
+  sku: string;
+  price: number;
+  productId: string;
+  storeId: number;
+  isBestStore: boolean;
+  book: Book;
+  seller: Seller;
+}
+
+interface BookSellerResponse {
   page: number;
   count: number;
   totalPages: number;
   totalCount: number;
   maxPage: number;
-  items: BookImage[];
+  items: BookSeller[];
 }
 
-export default function Image() {
+export default function Book_Seller() {
   const [page, setPage] = useState(0);
   const [pageSize] = useState(8);
   const [totalPages, setTotalPages] = useState(0);
@@ -55,18 +61,20 @@ export default function Image() {
   const [selectAll, setSelectAll] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const {isOpen, openModal, closeModal } = useModal();
-  const [bookImages, setBookImages] = useState<BookImage[]>([]);
-  const [editingBookImage, setEditingBookImage] = useState<BookImage | null>(null);
+  const [bookSellers, setBookSellers] = useState<BookSeller[]>([]);
+  const [editingBookSeller, setEditingBookSeller] = useState<BookSeller | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   const [books, setBooks] = useState<Book[]>([]);
+  const [sellers, setSellers] = useState<Seller[]>([]);
   const [, setSelectedBook] = useState<number | "">("");
+  const [, setSelectedSeller] = useState<number | "">("");
 
   useEffect(() => {
-    fetchBookImages();
+    fetchBookSellers();
   }, [page]);
 
   useEffect(() => {
@@ -79,26 +87,27 @@ export default function Image() {
 
   useEffect(() => {
     if (debouncedSearchTerm !== '') {
-      fetchBookImages();
+      fetchBookSellers();
     } else {
-      fetchBookImages();
+      fetchBookSellers();
     }
   }, [debouncedSearchTerm, page]);
 
   useEffect(() => {
     if(isOpen) {
       fetchBooks();
+      fetchSellers();
     }
   }, [isOpen]);
 
 
-  const fetchBookImages = async () => {
+  const fetchBookSellers = async () => {
     try {
-      const res = await DataService.get<BookImageResponse, any>(
-        `/BookImage/getallbypaging?page=${page}&pageSize=${pageSize}&keyword=${debouncedSearchTerm}`
+      const res = await DataService.get<BookSellerResponse, any>(
+        `/BookSeller/getallbypaging?page=${page}&pageSize=${pageSize}&keyword=${debouncedSearchTerm}`
       );
       if (res && Array.isArray(res.items)) {
-        setBookImages(res.items);
+        setBookSellers(res.items);
         setTotalPages(res.totalPages);
       } else {
         ToastService.error("Dữ liệu không hợp lệ");
@@ -125,46 +134,63 @@ export default function Image() {
     }
   };
 
+  const fetchSellers = async () => {
+    try {
+      const res = await DataService.get<Seller[], any>("/Seller/getall");
+      if (res && Array.isArray(res)) {
+        setSellers(res.map(a => ({
+          sellerId: a.sellerId ?? a.id ?? 0,
+          name: a.name ?? ""
+        })));
+      } else {
+        ToastService.error("Dữ liệu không hợp lệ");
+      }
+    } catch (err) {
+      ToastService.error("Không thể tải danh sách");
+    }
+  };
+
   // Reset Form
   const resetForm = () => {
-    setEditingBookImage(null);
+    setEditingBookSeller(null);
     setSelectedIds([]);
     setSelectAll(false);
   };
 
-  const prepareAddBookImage = () => {
-    setEditingBookImage({
-        imageId: 0,
-        bookId: 0,
-        baseUrl: '',
-        smallUrl: '',
-        mediumUrl: '',
-        largeUrl: '',
-        thumbnailUrl: '',
-        isGallery: false,
-        book: { bookId: 0, name: '', description: '' }
+  const prepareAddBookSeller = () => {
+    setEditingBookSeller({
+      id: 0,
+      bookId: 0,
+      sellerId: 0,
+      sku: '',
+      price: 0,
+      productId: '',
+      storeId: 0,
+      isBestStore: false,
+      book: { bookId: 0, name: '', description: '' },
+      seller: { sellerId: 0, name: '' }
     });
     openModal();
   };
 
-  const prepareEditBookImage = (bookImage: BookImage) => {
-    setEditingBookImage({ ...bookImage });
+  const prepareEditBookSeller = (bookSeller: BookSeller) => {
+    setEditingBookSeller({ ...bookSeller });
     openModal();
   };
 
-  // Submit book image
-  const handleSubmitBookImage = async (e: React.FormEvent) => {
+  // Submit book seller
+  const handleSubmitBookSeller = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingBookImage) return;
+    if (!editingBookSeller) return;
 
     setIsSubmitting(true);
     try {
-      if (editingBookImage.imageId > 0) {
-        // Update existing book image
-        await handleUpdateBookImage();
+      if (editingBookSeller.id > 0) {
+        // Update existing seller
+        await handleUpdateBookSeller();
       } else {
-        // Create new book image
-        await handleAddBookImage();
+        // Create new seller
+        await handleAddBookSeller();
       }
     } catch (error) {
       console.error("Submit error:", error);
@@ -174,25 +200,25 @@ export default function Image() {
   };
 
 
-  // Add book image
-  const handleAddBookImage = async () => {
-    if (!editingBookImage) return;
+  // Add book seller
+  const handleAddBookSeller = async () => {
+    if (!editingBookSeller) return;
 
     try {
       const data = {
-        BookId: editingBookImage.bookId,
-        BaseUrl: editingBookImage.baseUrl,
-        SmallUrl: editingBookImage.smallUrl,
-        MediumUrl: editingBookImage.mediumUrl,
-        LargeUrl: editingBookImage.largeUrl,
-        ThumbnailUrl: editingBookImage.thumbnailUrl,
-        IsGallery: editingBookImage.isGallery
+        BookId: editingBookSeller.bookId,
+        SellerId: editingBookSeller.sellerId,
+        Sku: editingBookSeller.sku,
+        Price: editingBookSeller.price,
+        ProductId: editingBookSeller.productId || "",
+        StoreId: editingBookSeller.storeId,
+        IsBestStore: editingBookSeller.isBestStore
       };
 
-      const res = await DataService.post("/BookImage/create", data);
+      const res = await DataService.post("/BookSeller/create", data);
       if (res) {
         ToastService.success("Thêm thành công");
-        fetchBookImages();
+        fetchBookSellers();
         closeModal();
         resetForm();
       }
@@ -202,26 +228,26 @@ export default function Image() {
   };
 
 
-  // Update book image
-  const handleUpdateBookImage = async () => {
-    if (!editingBookImage || editingBookImage.imageId <= 0) return;
+  // Update book seller
+  const handleUpdateBookSeller = async () => {
+    if (!editingBookSeller || editingBookSeller.id <= 0) return;
 
     try {
       const data = {
-        ImageId: editingBookImage.imageId,
-        BookId: editingBookImage.bookId,
-        BaseUrl: editingBookImage.baseUrl,
-        SmallUrl: editingBookImage.smallUrl,
-        MediumUrl: editingBookImage.mediumUrl,
-        LargeUrl: editingBookImage.largeUrl,
-        ThumbnailUrl: editingBookImage.thumbnailUrl,
-        IsGallery: editingBookImage.isGallery
+        Id: editingBookSeller.id,
+        BookId: editingBookSeller.bookId,
+        SellerId: editingBookSeller.sellerId,
+        Sku: editingBookSeller.sku,
+        Price: editingBookSeller.price,
+        ProductId: editingBookSeller.productId || "",
+        StoreId: editingBookSeller.storeId,
+        IsBestStore: editingBookSeller.isBestStore
       };
 
-      const res = await DataService.put("/BookImage/Update", data);
+      const res = await DataService.put("/BookSeller/Update", data);
       if (res) {
         ToastService.success("Cập nhật thành công");
-        fetchBookImages();
+        fetchBookSellers();
         closeModal();
         resetForm();
       }
@@ -231,8 +257,8 @@ export default function Image() {
   };
 
 
-  // Delete book image
-  const handleDeleteBookImage = async () => {
+  // Delete book seller
+  const handleDeleteBookSeller = async () => {
     if (selectedIds.length === 0) {
       ToastService.error("Vui lòng chọn ít nhất một dòng để xóa");
       return;
@@ -249,7 +275,7 @@ export default function Image() {
     try {
       let data = JSON.stringify(selectedIds);
       const res = await DataService.delete<any>(
-        "/BookImage/deletemulti?checkedList=" + data
+        "/BookSeller/deletemulti?checkedList=" + data
       );
       if (res) {
         if (Array.isArray(res) && res.length > 0) {
@@ -262,7 +288,7 @@ export default function Image() {
             );
           }
         }
-        fetchBookImages();
+        fetchBookSellers();
         resetForm();
       }
     } catch (err) {
@@ -274,7 +300,7 @@ export default function Image() {
     if (selectAll) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(bookImages.map((bookImage) => bookImage.imageId));
+      setSelectedIds(bookSellers.map((bookSeller) => bookSeller.sellerId));
     }
     setSelectAll(!selectAll);
   };
@@ -299,13 +325,13 @@ export default function Image() {
           <div className="px-6 py-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="primary" onClick={prepareAddBookImage}>
+                <Button size="sm" variant="primary" onClick={prepareAddBookSeller}>
                   Thêm mới
                 </Button>
                 <Button
                   size="sm"
                   variant="danger"
-                  onClick={handleDeleteBookImage}
+                  onClick={handleDeleteBookSeller}
                   disabled={selectedIds.length === 0}
                 >
                   Xoá
@@ -314,7 +340,7 @@ export default function Image() {
 
               <form onSubmit={(e) => {
                   e.preventDefault();
-                  fetchBookImages();
+                  fetchBookSellers();
                 }} className="w-full sm:w-auto">
                   <div className="relative">
                     <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
@@ -347,7 +373,7 @@ export default function Image() {
                         type="button"
                         onClick={() => {
                           setSearchTerm('');
-                          fetchBookImages();
+                          fetchBookSellers();
                         }}
                         className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
@@ -406,37 +432,25 @@ export default function Image() {
                           isHeader
                           className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
                         >
-                          Ảnh mặc định
+                          Tên nhà xuất bản
                         </TableCell>
                         <TableCell
                           isHeader
                           className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
                         >
-                          Ảnh nhỏ
+                          Mã sản phẩm
                         </TableCell>
                         <TableCell
                           isHeader
                           className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
                         >
-                          Ảnh trung bình
+                          Giá
                         </TableCell>
                         <TableCell
                           isHeader
                           className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
                         >
-                          Ảnh lớn
-                        </TableCell>
-                        <TableCell
-                          isHeader
-                          className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
-                        >
-                          Ảnh thu nhỏ
-                        </TableCell>
-                        <TableCell
-                          isHeader
-                          className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
-                        >
-                          Is Gallery
+                          IsBestStore
                         </TableCell>
                         <TableCell
                           isHeader
@@ -449,17 +463,17 @@ export default function Image() {
 
                     {/* Table Body */}
                     <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                      {bookImages.length > 0 ? (
-                        bookImages.map((bookImage, index) => (
-                          <TableRow key={bookImage.imageId ?? index}>
+                      {bookSellers.length > 0 ? (
+                        bookSellers.map((bookSeller, index) => (
+                          <TableRow key={bookSeller.id ?? index}>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                               <input
                                 type="checkbox"
                                 checked={selectedIds.includes(
-                                  bookImage.imageId
+                                  bookSeller.id
                                 )}
                                 onChange={() =>
-                                  handleCheckboxChange(bookImage.imageId)
+                                  handleCheckboxChange(bookSeller.id)
                                 }
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               />
@@ -468,75 +482,34 @@ export default function Image() {
                               {page * pageSize + index + 1}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              {bookImage.book.name}
+                              {bookSeller.book.name}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.baseUrl || "/images/default-avatar.png"}
-                                  alt="baseUrl"
-                                />
-                              </div>
+                              {bookSeller.seller.name}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.smallUrl || "/images/default-avatar.png"}
-                                  alt="smallUrl"
-                                />
-                              </div>
+                              {bookSeller.sku}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.mediumUrl || "/images/default-avatar.png"}
-                                  alt="mediumUrl"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.largeUrl || "/images/default-avatar.png"}
-                                  alt="largeUrl"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
-                                <img
-                                  width={40}
-                                  height={40}
-                                  src={bookImage.thumbnailUrl || "/images/default-avatar.png"}
-                                  alt="thumbnailUrl"
-                                />
-                              </div>
+                              {bookSeller.price}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                               <Badge
                                 size="sm"
                                 color={
-                                  bookImage.isGallery === true
+                                  bookSeller.isBestStore === true
                                     ? "success"
-                                    : bookImage.isGallery === false
+                                    : bookSeller.isBestStore === false
                                     ? "warning"
                                     : "error"
                                 }
                               >
-                                {bookImage.isGallery ? "Có" : "Không"}
+                                {bookSeller.isBestStore ? "Có" : "Không"}
                               </Badge>
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                               <button
-                                onClick={() => prepareEditBookImage(bookImage)}
+                                onClick={() => prepareEditBookSeller(bookSeller)}
                                 className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-xs font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
                               >
                                 <svg
@@ -573,7 +546,7 @@ export default function Image() {
               {totalPages >= 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Hiển thị trang {page + 1} trên {totalPages} - Tổng {bookImages.length} mục
+                    Hiển thị trang {page + 1} trên {totalPages} - Tổng {bookSellers.length} mục
                   </div>
                   
                   <div className="flex gap-1">
@@ -675,12 +648,12 @@ export default function Image() {
         <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto  rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              {editingBookImage?.imageId
+              {editingBookSeller?.id
                 ? "Chỉnh sửa"
                 : "Thêm mới"}
             </h4>
           </div>
-          <form className="flex flex-col" onSubmit={handleSubmitBookImage}>
+          <form className="flex flex-col" onSubmit={handleSubmitBookSeller}>
             <div className="custom-scrollbar h-[340px] overflow-y-auto  px-2 pb-3">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
@@ -692,12 +665,12 @@ export default function Image() {
                     }))}
                     value={books
                       .map(book => ({ value: book.bookId, label: book.name }))
-                      .find(option => option.value === editingBookImage?.bookId) || null}
+                      .find(option => option.value === editingBookSeller?.bookId) || null}
                     onChange={option => {
                       setSelectedBook(option ? option.value : "");
-                      if (editingBookImage) {
-                        setEditingBookImage({
-                          ...editingBookImage,
+                      if (editingBookSeller) {
+                        setEditingBookSeller({
+                          ...editingBookSeller,
                           bookId: option ? option.value : 0
                         });
                       }
@@ -708,80 +681,98 @@ export default function Image() {
                 </div>
 
                 <div>
-                  <Label>Ảnh mặc định</Label>
+                  <Label>Chọn nhà cung cấp</Label>
+                  <Select
+                    options={sellers.map(seller => ({
+                      value: seller.sellerId,
+                      label: seller.name
+                    }))}
+                    value={
+                      sellers
+                        .map(seller => ({
+                          value: seller.sellerId,
+                          label: seller.name
+                        }))
+                        .find(option => option.value === editingBookSeller?.sellerId) || null
+                    }
+                    onChange={option => {
+                      setSelectedSeller(option ? option.value : "");
+                      if (editingBookSeller) {
+                        setEditingBookSeller({
+                          ...editingBookSeller,
+                          sellerId: option ? option.value : 0
+                        });
+                      }
+                    }}
+                    placeholder="Tìm kiếm tác giả..."
+                    isSearchable
+                  />
+                </div>
+
+                <div>
+                  <Label>Sku</Label>
                   <Input
                     type="text"
-                    value={editingBookImage?.baseUrl || ""}
+                    value={editingBookSeller?.sku || ""}
                     onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, baseUrl: e.target.value } : null
+                      setEditingBookSeller((prev) =>
+                        prev ? { ...prev, sku: e.target.value } : null
                       )
                     }
                   />
                 </div>
 
                 <div>
-                  <Label>Ảnh nhỏ</Label>
+                  <Label>Giá</Label>
                   <Input
                     type="text"
-                    value={editingBookImage?.smallUrl || ""}
+                    value={editingBookSeller?.price || ""}
                     onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, smallUrl: e.target.value } : null
+                      setEditingBookSeller((prev) =>
+                        prev ? { ...prev, price: Number(e.target.value) } : null
                       )
                     }
                   />
                 </div>
 
                 <div>
-                  <Label>Ảnh trung bình</Label>
+                  <Label>Mã sản phẩm</Label>
                   <Input
                     type="text"
-                    value={editingBookImage?.mediumUrl || ""}
+                    value={editingBookSeller?.productId || ""}
                     onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, mediumUrl: e.target.value } : null
+                      setEditingBookSeller((prev) =>
+                        prev ? { ...prev, productId: e.target.value } : null
                       )
                     }
                   />
                 </div>
 
                 <div>
-                  <Label>Ảnh lớn</Label>
+                  <Label>Mã cửa hàng</Label>
                   <Input
                     type="text"
-                    value={editingBookImage?.largeUrl || ""}
+                    value={editingBookSeller?.storeId || ""}
                     onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, largeUrl: e.target.value } : null
+                      setEditingBookSeller((prev) =>
+                        prev ? { ...prev, storeId: Number(e.target.value) } : null
                       )
                     }
                   />
                 </div>
-                <div>
-                  <Label>Ảnh thu nhỏ</Label>
-                  <Input
-                    type="text"
-                    value={editingBookImage?.thumbnailUrl || ""}
-                    onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, thumbnailUrl: e.target.value } : null
-                      )
-                    }
-                  />
-                </div>
+
                 <div >
                   <input
                     type="checkbox"
-                    checked={editingBookImage?.isGallery || false}
+                    checked={editingBookSeller?.isBestStore || false}
                     onChange={(e) =>
-                      setEditingBookImage((prev) =>
-                        prev ? { ...prev, isGallery: e.target.checked } : null
+                      setEditingBookSeller((prev) =>
+                        prev ? { ...prev, isBestStore: e.target.checked } : null
                       )
                     }
                     className="w-4 h-4 accent-blue-500"
                   />
-                  <Label>Is Gallery</Label>
+                  <Label>Is Best Store</Label>
                 </div>
               </div>
             </div>
@@ -801,7 +792,7 @@ export default function Image() {
                 variant="primary"
                 disabled={isSubmitting}
               >
-                {editingBookImage?.imageId ? "Lưu thay đổi" : "Thêm mới"}
+                {editingBookSeller?.id ? "Lưu thay đổi" : "Thêm mới"}
               </Button>
             </div>
           </form>
