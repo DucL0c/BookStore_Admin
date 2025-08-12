@@ -239,7 +239,7 @@ export default function Seller() {
   return (
     <>
       <PageMeta title="Admin" description="This is Admin Dashboard page" />
-      <PageBreadcrumb pageTitle="Người bán" />
+      <PageBreadcrumb pageTitle="Nhà cung cấp" />
       <div className="space-y-6">
         <div
           className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]`}

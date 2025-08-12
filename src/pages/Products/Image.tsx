@@ -290,7 +290,7 @@ export default function Image() {
   return (
     <>
       <PageMeta title="Admin" description="This is Admin Dashboard page" />
-      <PageBreadcrumb pageTitle="Tác giả" />
+      <PageBreadcrumb pageTitle="Ảnh bìa" />
       <div className="space-y-6">
         <div
           className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]`}
@@ -501,20 +501,20 @@ export default function Image() {
                               </div>
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
+                              <div className="w-12 h-12 overflow-hidden rounded-full">
                                 <img
-                                  width={40}
-                                  height={40}
+                                  width={48}
+                                  height={48}
                                   src={bookImage.largeUrl || "/images/default-avatar.png"}
                                   alt="largeUrl"
                                 />
                               </div>
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                              <div className="w-10 h-10 overflow-hidden rounded-full">
+                              <div className="w-8 h-8 overflow-hidden rounded-full">
                                 <img
-                                  width={40}
-                                  height={40}
+                                  width={32}
+                                  height={32}
                                   src={bookImage.thumbnailUrl || "/images/default-avatar.png"}
                                   alt="thumbnailUrl"
                                 />
