@@ -704,7 +704,7 @@ export default function Book_Seller() {
                         });
                       }
                     }}
-                    placeholder="Tìm kiếm tác giả..."
+                    placeholder="Tìm kiếm nhà cung cấp..."
                     isSearchable
                   />
                 </div>
