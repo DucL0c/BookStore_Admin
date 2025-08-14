@@ -7,11 +7,23 @@ const axiosClient = axios.create({
   },
 });
 
+axiosClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 axiosClient.interceptors.response.use(
   (response) => response.data,
-  (error) => {
-    console.error("API Error:", error.response?.data || error.message);
-    return Promise.reject(error);
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      window.location.href = "/signin";
+    }
+    return Promise.reject(err);
   }
 );
 
