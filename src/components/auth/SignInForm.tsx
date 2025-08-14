@@ -1,42 +1,30 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
-import DataService from "../../services/axiosClient";
+import { useAuth } from "../../hooks/useAuth";
+import { LoginPayload } from "../../auth/auth.types";
 
-interface User {
-  email: string;
-  role: string;
-}
-
-interface LoginResponse {
-  token: string;
-  user: User;
-}
 
 export default function SignInForm() {
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const location = useLocation() as any;
+  const from = location.state?.from?.pathname ?? '/';
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      const res = await DataService.post<LoginResponse, any>("/Auth/login", { email, password });
-      if (res) {
-         const user: User = {
-          email: res.user.email,
-          role: res.user.role
-        };
-        localStorage.setItem("accessToken", res.token);
-        localStorage.setItem("user", JSON.stringify(user));
-        navigate("/");
-      }
+      const payload: LoginPayload = { email, password };
+      await login(payload);
+      navigate(from, { replace: true });
     } catch (error) {
       console.error(error);
     }

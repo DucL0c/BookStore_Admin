@@ -2,16 +2,20 @@ import { useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import Button from "../ui/button/Button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function UserDropdown() {
+  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation() as any;
+  const from = location.state?.from?.pathname ?? '/signin';
+
 
   function handleLogout() {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    navigate("/signin");
+    logout();
+    navigate(from, { replace: true });
   }
 
   function toggleDropdown() {
