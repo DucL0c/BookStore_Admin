@@ -16,20 +16,7 @@ const Specification = lazy(() => import('../pages/Products/Specification'));
 const Image = lazy(() => import('../pages/Products/Image'));
 const Book_Author = lazy(() => import('../pages/Products/Book_Author'));
 const Book_Seller = lazy(() => import('../pages/Products/Book_Seller'));
-const Calendar = lazy(() => import('../pages/Calendar'));
-const Blank = lazy(() => import('../pages/Blank'));
-const FormElements = lazy(() => import('../pages/Forms/FormElements'));
-const BasicTables = lazy(() => import('../pages/Tables/BasicTables'));
-const Alerts = lazy(() => import('../pages/UiElements/Alerts'));
-const Avatars = lazy(() => import('../pages/UiElements/Avatars'));
-const Badges = lazy(() => import('../pages/UiElements/Badges'));
-const Buttons = lazy(() => import('../pages/UiElements/Buttons'));
-const Images = lazy(() => import('../pages/UiElements/Images'));
-const Videos = lazy(() => import('../pages/UiElements/Videos'));
-const LineChart = lazy(() => import('../pages/Charts/LineChart'));
-const BarChart = lazy(() => import('../pages/Charts/BarChart'));
 const SignIn = lazy(() => import('../pages/AuthPages/SignIn'));
-const SignUp = lazy(() => import('../pages/AuthPages/SignUp'));
 const NotFound = lazy(() => import('../pages/OtherPage/NotFound'));
 
 export default function AppRouter() {
@@ -59,25 +46,12 @@ export default function AppRouter() {
               <Route path="/seller" element={<Seller />} />
               <Route path="/specification" element={<Specification />} />
               <Route path="/image" element={<Image />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/blank" element={<Blank />} />
-              <Route path="/form-elements" element={<FormElements />} />
-              <Route path="/basic-tables" element={<BasicTables />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/avatars" element={<Avatars />} />
-              <Route path="/badge" element={<Badges />} />
-              <Route path="/buttons" element={<Buttons />} />
-              <Route path="/images" element={<Images />} />
-              <Route path="/videos" element={<Videos />} />
-              <Route path="/line-chart" element={<LineChart />} />
-              <Route path="/bar-chart" element={<BarChart />} />
+
             </Route>
           </Route>
 
           {/* Public Routes */}
           <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
