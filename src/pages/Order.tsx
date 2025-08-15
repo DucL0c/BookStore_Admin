@@ -391,7 +391,7 @@ export default function Order() {
               {totalPages >= 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Hiển thị trang {page + 1} trên {totalPages} - Tổng {orders.length} mục
+                    {page + 1} / {totalPages} - Tổng {orders.length} dòng
                   </div>
                   
                   <div className="flex gap-1">
