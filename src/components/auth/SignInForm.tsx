@@ -7,6 +7,7 @@ import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import { useAuth } from "../../hooks/useAuth";
 import { LoginPayload } from "../../auth/auth.types";
+import ToastService from "../../services/notificationService";
 
 export default function SignInForm() {
   const { login } = useAuth();
@@ -49,7 +50,11 @@ export default function SignInForm() {
 
     try {
       const payload: LoginPayload = { email, password };
-      await login(payload);
+      const userData = await login(payload);
+      if (userData?.role !== "admin") {
+        ToastService.error("Bạn không có quyền truy cập.");
+        return;
+      }
       navigate(from, { replace: true });
     } catch (error) {
       console.error(error);
