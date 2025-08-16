@@ -224,7 +224,7 @@ export default function Order() {
                     </span>
                     <input
                       type="text"
-                      placeholder="Tìm kiếm danh mục..."
+                      placeholder="Tìm kiếm đơn hàng..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 sm:w-[250px] lg:w-[350px]"
@@ -272,6 +272,12 @@ export default function Order() {
                           className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400"
                         >
                           STT
+                        </TableCell>
+                        <TableCell
+                          isHeader
+                          className="px-5 py-3  text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                        >
+                          Mã đơn
                         </TableCell>
                         <TableCell
                           isHeader
@@ -325,6 +331,9 @@ export default function Order() {
                           <TableRow key={order.orderId ?? index}>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                               {page * pageSize + index + 1}
+                            </TableCell>
+                            <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                              {order.orderId}
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                               {order.user.name}
