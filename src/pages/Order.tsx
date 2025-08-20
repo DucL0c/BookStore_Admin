@@ -60,11 +60,11 @@ interface OrderResponse {
 }
 
 const ORDER_STATUSES = [
-  { value: "Chờ xử lý", label: "Chờ xử lý" },
-  { value: "Đang xử lý", label: "Đang xử lý" },
-  { value: "Đang vận chuyển", label: "Đang vận chuyển" },
-  { value: "Hoàn thành", label: "Hoàn thành" },
-  { value: "Đã hủy", label: "Đã hủy" },
+  { value: "pending", label: "Chờ xác nhận" },
+  { value: "confirmed", label: "Đang xác nhận" },
+  { value: "shipping", label: "Đang giao hàng" },
+  { value: "delivered", label: "Đã giao hàng" },
+  { value: "cancelled", label: "Đã hủy" },
 ];
 
 export default function Order() {
@@ -174,15 +174,15 @@ export default function Order() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Chờ xử lý":
+      case "pending":
         return "info";
-      case "Đang xử lý":
+      case "confirmed":
         return "primary";
-      case "Đang vận chuyển":
+      case "shipping":
         return "light";
-      case "Hoàn thành":
+      case "delivered":
         return "success";
-      case "Đã hủy":
+      case "cancelled":
         return "error";
       default:
         return "primary";
@@ -358,7 +358,7 @@ export default function Order() {
                                 size="sm"
                                 color={getStatusColor(order.status)}
                               >
-                                {order.status}
+                                {ORDER_STATUSES.find(option => option.value === order.status)?.label || order.status}
                               </Badge>
                             </TableCell>
                             <TableCell className="px-5 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
